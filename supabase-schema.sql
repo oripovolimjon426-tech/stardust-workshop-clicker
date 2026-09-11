@@ -29,7 +29,17 @@ create policy "Anyone can submit leaderboard score"
     and level between 1 and 999
   );
 
-grant select, insert on public.leaderboard to anon, authenticated;
+create policy "Anyone can update leaderboard score"
+  on public.leaderboard for update
+  using (true)
+  with check (
+    player_id is not null
+    and char_length(player_name) between 1 and 18
+    and score between 0 and 1000000000000000
+    and level between 1 and 999
+  );
+
+grant select, insert, update on public.leaderboard to anon, authenticated;
 
 -- Enable Supabase Realtime events for live leaderboard refreshes.
 alter publication supabase_realtime add table public.leaderboard;
