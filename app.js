@@ -53,7 +53,8 @@ generatedAchievementGroups.forEach(group => group.values.forEach((goal, index) =
   get: group.get
 })));
 
-const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, suppliesClaimed: 0, lastSupply: '', playerName: '星塵探勘員', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
+const createPlayerId = () => crypto.randomUUID ? crypto.randomUUID() : `player-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const defaultState = () => ({ playerId: createPlayerId(), coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, suppliesClaimed: 0, lastSupply: '', playerName: '星塵探勘員', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
 let state = defaultState();
 let sessionStarted = Date.now();
 let lastTick = Date.now();
@@ -75,7 +76,7 @@ function loadGame() {
   try {
     const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!saved) return;
-    state = { ...defaultState(), ...saved, upgrades: { ...defaultState().upgrades, ...(saved.upgrades || {}) } };
+    state = { ...defaultState(), ...saved, playerId: saved.playerId || createPlayerId(), upgrades: { ...defaultState().upgrades, ...(saved.upgrades || {}) } };
     const elapsed = Math.min(MAX_OFFLINE_SECONDS, Math.max(0, (Date.now() - state.lastSaved) / 1000));
     const offlineGain = Math.floor(elapsed * state.autoPower * state.multiplier * state.permanentMultiplier);
     if (offlineGain > 0) {
@@ -188,7 +189,7 @@ async function recordLeaderboardScore() {
   scores.push({ name: state.playerName, score: Math.floor(state.totalCoins), level: state.level, date: Date.now() });
   localStorage.setItem('stardust-leaderboard-v1', JSON.stringify(scores.sort((a, b) => b.score - a.score).slice(0, 10)));
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, { method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ player_name: state.playerName, score: Math.floor(state.totalCoins), level: state.level }) });
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?on_conflict=player_id`, { method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ player_id: state.playerId, player_name: state.playerName, score: Math.floor(state.totalCoins), level: state.level }) });
     if (!response.ok) throw new Error('submit failed');
     showToast('全球排行榜紀錄已更新');
   } catch (error) {
