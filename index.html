@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="description" content="星塵工坊是一款可保存進度的放置點擊遊戲。" />
+  <title>星塵工坊 | 點擊放置遊戲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <header class="topbar shell">
+    <a class="brand" href="./" aria-label="星塵工坊首頁">
+      <span class="brand-mark">✦</span>
+      <span><strong>星塵</strong><small>工坊</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="save-status" id="saveStatus">已自動保存</span>
+      <button class="icon-button" id="soundToggle" type="button" aria-label="切換音效" title="切換音效">♫</button>
+      <button class="icon-button" id="resetButton" type="button" aria-label="重置遊戲" title="重置遊戲">↺</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero-grid">
+      <div class="intro-panel">
+        <p class="eyebrow"><span></span> SECTOR 07 / ONLINE</p>
+        <h1>把每一次點擊<br /><em>變成星光。</em></h1>
+        <p class="hero-copy">收集星塵，升級你的採集艙，讓整座工坊在你離線時也持續運轉。</p>
+        <div class="mini-stats">
+          <div><span>目前等級</span><strong id="levelValue">1</strong></div>
+          <div><span>每秒產出</span><strong><span id="perSecondValue">0</span> <small>/ sec</small></strong></div>
+          <div><span>總點擊</span><strong id="clicksValue">0</strong></div>
+        </div>
+      </div>
+      <div class="resource-panel">
+        <div class="resource-heading"><span>星塵餘額</span><span class="live-dot">LIVE</span></div>
+        <div class="resource-value"><span id="coinsValue">0</span><span class="coin-symbol">✦</span></div>
+        <div class="progress-track"><span id="levelProgress"></span></div>
+        <div class="progress-label"><span id="progressText">距離下一級 25</span><span id="multiplierValue">x1.0 產出</span></div>
+      </div>
+    </section>
+
+    <section class="game-layout">
+      <div class="click-stage">
+        <div class="stage-label"><span class="pulse-dot"></span> 核心採集器 <span class="stage-id">CORE-01</span></div>
+        <div class="core-wrap">
+          <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+          <button class="core-button" id="clickButton" type="button" aria-label="點擊採集星塵">
+            <span class="core-icon">✦</span><span class="core-label">採集</span><span class="core-hint">CLICK TO MINE</span>
+          </button>
+          <div class="click-particles" id="clickParticles"></div>
+        </div>
+        <p class="stage-tip">每次點擊基礎產出 <strong id="clickPowerValue">1</strong> 星塵 <span>·</span> 暴擊率 <strong id="critValue">5%</strong></p>
+      </div>
+
+      <aside class="shop-panel">
+        <div class="section-heading"><div><p class="eyebrow">UPGRADE BAY</p><h2>升級艙</h2></div><span class="upgrade-count" id="upgradeCount">0 / 4</span></div>
+        <div class="upgrade-list" id="upgradeList"></div>
+      </aside>
+    </section>
+
+    <section class="lower-grid">
+      <div class="info-panel missions-panel">
+        <div class="section-heading"><div><p class="eyebrow">DAILY OBJECTIVES</p><h2>任務與成就</h2></div><span class="completion" id="achievementCount">0 / 6</span></div>
+        <div class="mission-list" id="missionList"></div>
+      </div>
+      <div class="info-panel stats-panel">
+        <div class="section-heading"><div><p class="eyebrow">YOUR LOG</p><h2>玩家資料</h2></div></div>
+        <div class="data-list">
+          <div><span>本次遊玩時間</span><strong id="sessionTime">0m</strong></div>
+          <div><span>最高單次點擊</span><strong id="bestClick">1 ✦</strong></div>
+          <div><span>累計收集星塵</span><strong id="totalCoinsValue">0 ✦</strong></div>
+          <div><span>離線收益</span><strong id="offlineValue">0 ✦</strong></div>
+        </div>
+        <div class="data-footer"><span class="cloud-icon">☁</span><span>資料儲存於此裝置<br /><small>最後保存 <b id="lastSaved">剛剛</b></small></span></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+  <div class="offline-modal hidden" id="offlineModal">
+    <div class="modal-card"><span class="modal-icon">☼</span><p class="eyebrow">WELCOME BACK</p><h2>工坊沒有停下</h2><p>你離線期間，採集器替你收集了 <strong id="offlineModalValue">0</strong> 星塵。</p><button class="primary-button" id="closeModal" type="button">收下星塵</button></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
