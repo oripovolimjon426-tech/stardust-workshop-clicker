@@ -66,6 +66,8 @@ let musicTimer;
 let musicPlaying = false;
 let supabaseClient;
 let leaderboardRefreshTimer;
+let leaderboardLoadStarted = false;
+let hasRemoteLeaderboard = false;
 
 const $ = id => document.getElementById(id);
 const format = value => Math.floor(value).toLocaleString('zh-TW');
@@ -157,6 +159,8 @@ function renderAchievements() {
 }
 
 function renderLeaderboard() {
+  if (leaderboardLoadStarted) return;
+  leaderboardLoadStarted = true;
   const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]');
   renderLeaderboardRows(scores, '本機排行榜');
   refreshRemoteLeaderboard();
@@ -165,7 +169,10 @@ function renderLeaderboard() {
 function refreshRemoteLeaderboard() {
   fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,level&order=score.desc,created_at.asc&limit=10`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } })
     .then(response => response.ok ? response.json() : Promise.reject(new Error('leaderboard unavailable')))
-    .then(remoteScores => renderLeaderboardRows(remoteScores.map(entry => ({ name: entry.player_name, score: entry.score, level: entry.level })), '全球排行榜'))
+    .then(remoteScores => {
+      hasRemoteLeaderboard = true;
+      renderLeaderboardRows(remoteScores.map(entry => ({ name: entry.player_name, score: entry.score, level: entry.level })), '全球排行榜');
+    })
     .catch(() => {});
 }
 
@@ -195,7 +202,7 @@ async function recordLeaderboardScore() {
   } catch (error) {
     showToast('目前離線，已保存本機紀錄。', true);
   }
-  renderLeaderboard();
+  refreshRemoteLeaderboard();
 }
 
 function collect() {
@@ -371,7 +378,7 @@ function switchView(view) {
 }
 
 document.querySelectorAll('.menu-item').forEach(item => item.addEventListener('click', () => { switchView(item.dataset.view); toggleMenu(false); }));
-$('saveNameButton').addEventListener('click', () => { state.playerName = $('playerName').value.trim() || '星塵探勘員'; $('playerName').value = state.playerName; saveGame(); renderLeaderboard(); showToast('玩家名稱已保存'); });
+$('saveNameButton').addEventListener('click', () => { state.playerName = $('playerName').value.trim() || '星塵探勘員'; $('playerName').value = state.playerName; saveGame(); refreshRemoteLeaderboard(); showToast('玩家名稱已保存'); });
 $('recordScoreButton').addEventListener('click', recordLeaderboardScore);
 switchView('workshop');
 initRealtimeLeaderboard();
