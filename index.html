@@ -67,21 +67,17 @@
       </aside>
     </section>
 
-    <section class="lower-grid">
-      <div class="info-panel missions-panel">
-        <div class="section-heading"><div><p class="eyebrow">DAILY OBJECTIVES</p><h2>任務與成就</h2></div><span class="completion" id="achievementCount">0 / 6</span></div>
-        <div class="mission-list" id="missionList"></div>
-      </div>
-      <div class="info-panel stats-panel">
-        <div class="section-heading"><div><p class="eyebrow">YOUR LOG</p><h2>玩家資料</h2></div></div>
-        <div class="data-list">
-          <div><span>本次遊玩時間</span><strong id="sessionTime">0m</strong></div>
-          <div><span>最高單次點擊</span><strong id="bestClick">1 ✦</strong></div>
-          <div><span>累計收集星塵</span><strong id="totalCoinsValue">0 ✦</strong></div>
-          <div><span>離線收益</span><strong id="offlineValue">0 ✦</strong></div>
-        </div>
-        <div class="data-footer"><span class="cloud-icon">☁</span><span>資料儲存於此裝置<br /><small>最後保存 <b id="lastSaved">剛剛</b></small></span></div>
-      </div>
+    <section class="app-view hidden-view" id="achievementsView">
+      <div class="view-heading"><div><p class="eyebrow">ACHIEVEMENT ARCHIVE</p><h2>成就檔案庫</h2><p>每一個里程碑都會被記錄，看看你離全收集還有多遠。</p></div><span class="completion large-completion" id="achievementCount">0 / 16</span></div>
+      <div class="achievement-grid" id="achievementGrid"></div>
+    </section>
+    <section class="app-view hidden-view" id="profileView">
+      <div class="view-heading"><div><p class="eyebrow">PLAYER DOSSIER</p><h2>玩家資料</h2><p>你的採集紀錄、工坊效率與星核旅程。</p></div></div>
+      <div class="profile-layout"><div class="profile-card"><div class="avatar-ring">✦</div><label for="playerName">玩家名稱</label><div class="name-row"><input id="playerName" maxlength="18" value="星塵探勘員" /><button class="small-action" id="saveNameButton" type="button">保存</button></div><p class="profile-note">名稱只會儲存在此裝置的排行榜中。</p></div><div class="info-panel stats-panel"><div class="data-list"><div><span>本次遊玩時間</span><strong id="sessionTime">0m</strong></div><div><span>最高單次點擊</span><strong id="bestClick">1 ✦</strong></div><div><span>累計收集星塵</span><strong id="totalCoinsValue">0 ✦</strong></div><div><span>離線收益</span><strong id="offlineValue">0 ✦</strong></div><div><span>星核重置次數</span><strong id="prestigeCountValue">0 次</strong></div></div><div class="data-footer"><span class="cloud-icon">☁</span><span>資料儲存於此裝置<br /><small>最後保存 <b id="lastSaved">剛剛</b></small></span></div></div></div>
+    </section>
+    <section class="app-view hidden-view" id="leaderboardView">
+      <div class="view-heading"><div><p class="eyebrow">LOCAL HALL OF FAME</p><h2>排行榜</h2><p>本機最高紀錄榜。未來接上伺服器後即可擴充為全球排行榜。</p></div><span class="completion">TOP 10</span></div>
+      <div class="leaderboard-card"><div class="leaderboard-head"><span>排名</span><span>探勘員</span><span>累計星塵</span><span>等級</span></div><div id="leaderboardList"></div><button class="primary-button leaderboard-button" id="recordScoreButton" type="button">更新我的最佳紀錄</button></div>
     </section>
   </main>
 
@@ -89,9 +85,10 @@
   <aside class="side-menu" id="sideMenu" aria-hidden="true">
     <div class="side-menu-header"><div><p class="eyebrow">CONTROL DECK</p><h2>遊戲選單</h2></div><button class="icon-button" id="menuClose" type="button" aria-label="關閉遊戲選單">×</button></div>
     <nav class="menu-nav" aria-label="遊戲導覽">
-      <button class="menu-item active" data-scroll="top" type="button"><span>⌂</span> 工坊總覽</button>
-      <button class="menu-item" data-scroll="missions" type="button"><span>◇</span> 任務成就</button>
-      <button class="menu-item" data-scroll="stats" type="button"><span>▤</span> 玩家資料</button>
+      <button class="menu-item active" data-view="workshop" type="button"><span>⌂</span> 工坊總覽</button>
+      <button class="menu-item" data-view="achievements" type="button"><span>◇</span> 成就檔案庫</button>
+      <button class="menu-item" data-view="profile" type="button"><span>▤</span> 玩家資料</button>
+      <button class="menu-item" data-view="leaderboard" type="button"><span>♛</span> 排行榜</button>
     </nav>
     <div class="menu-feature"><div class="feature-icon">☼</div><div><strong>每日補給</strong><p id="dailySupplyText">今天可領取 100 ✦</p></div><button class="small-action" id="dailySupplyButton" type="button">領取</button></div>
     <div class="menu-feature music-feature"><div class="feature-icon">♫</div><div><strong>星際電台</strong><p>循環播放原創電子旋律</p></div><button class="small-action" id="musicToggle" type="button">播放</button></div>

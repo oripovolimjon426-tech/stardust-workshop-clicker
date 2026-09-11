@@ -14,8 +14,26 @@ const missionDefinitions = [
   { id: 'critical', name: '幸運閃耀', description: '觸發 10 次暴擊', goal: 10, get: state => state.criticalHits },
   { id: 'offline', name: '時間的禮物', description: '獲得 100 點離線收益', goal: 100, get: state => state.totalOffline }
 ];
+const achievementDefinitions = [
+  { id: 'clicks25', icon: '✦', name: '初次啟動', description: '完成 25 次點擊', goal: 25, get: state => state.clicks },
+  { id: 'clicks1000', icon: '⚡', name: '手速成星', description: '完成 1,000 次點擊', goal: 1000, get: state => state.clicks },
+  { id: 'coins1000', icon: '◈', name: '星塵囤積者', description: '累計收集 1,000 星塵', goal: 1000, get: state => state.totalCoins },
+  { id: 'coins10000', icon: '◆', name: '星海富翁', description: '累計收集 10,000 星塵', goal: 10000, get: state => state.totalCoins },
+  { id: 'upgrades5', icon: '⌘', name: '升級狂熱', description: '購買 5 次升級', goal: 5, get: state => state.totalUpgrades },
+  { id: 'upgrades20', icon: '⬡', name: '工坊大師', description: '購買 20 次升級', goal: 20, get: state => state.totalUpgrades },
+  { id: 'critical10', icon: '✹', name: '幸運閃耀', description: '觸發 10 次暴擊', goal: 10, get: state => state.criticalHits },
+  { id: 'critical100', icon: '☄', name: '超新星手氣', description: '觸發 100 次暴擊', goal: 100, get: state => state.criticalHits },
+  { id: 'offline100', icon: '☼', name: '時間的禮物', description: '獲得 100 點離線收益', goal: 100, get: state => state.totalOffline },
+  { id: 'offline1000', icon: '◌', name: '離線帝國', description: '獲得 1,000 點離線收益', goal: 1000, get: state => state.totalOffline },
+  { id: 'combo10', icon: '∞', name: '節奏捕手', description: '達成 x1.50 連擊倍率', goal: 10, get: state => bestCombo },
+  { id: 'level5', icon: '⬆', name: '航向深空', description: '達到等級 5', goal: 5, get: state => state.level },
+  { id: 'level10', icon: '✧', name: '銀河先驅', description: '達到等級 10', goal: 10, get: state => state.level },
+  { id: 'supply7', icon: '▣', name: '每日報到', description: '領取 7 次每日補給', goal: 7, get: state => state.suppliesClaimed },
+  { id: 'prestige1', icon: '☷', name: '重啟星核', description: '完成 1 次星核重置', goal: 1, get: state => state.prestigeCount },
+  { id: 'best100', icon: '★', name: '一擊入魂', description: '單次點擊獲得 100 星塵', goal: 100, get: state => state.bestClick }
+];
 
-const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, lastSupply: '', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
+const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, suppliesClaimed: 0, lastSupply: '', playerName: '星塵探勘員', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
 let state = defaultState();
 let sessionStarted = Date.now();
 let lastTick = Date.now();
@@ -82,13 +100,16 @@ function render() {
   $('bestClick').textContent = `${format(state.bestClick)} ✦`;
   $('totalCoinsValue').textContent = `${format(state.totalCoins)} ✦`;
   $('offlineValue').textContent = `${format(state.totalOffline)} ✦`;
+  $('prestigeCountValue').textContent = `${format(state.prestigeCount)} 次`;
+  $('playerName').value = state.playerName;
   $('sessionTime').textContent = `${Math.max(1, Math.floor((Date.now() - sessionStarted) / 60000))}m`;
   $('comboValue').textContent = `x${(1 + Math.min(combo, 20) * .05).toFixed(2)}`;
   $('comboBest').textContent = `最高 x${(1 + Math.min(bestCombo, 20) * .05).toFixed(2)}`;
   $('prestigeValue').textContent = `永久加成 x${state.permanentMultiplier.toFixed(2)}`;
   renderDailySupply();
   renderUpgrades();
-  renderMissions();
+  renderAchievements();
+  renderLeaderboard();
 }
 
 function renderUpgrades() {
@@ -102,14 +123,27 @@ function renderUpgrades() {
   }).join('');
 }
 
-function renderMissions() {
-  const completed = missionDefinitions.filter(mission => mission.get(state) >= mission.goal).length;
-  $('achievementCount').textContent = `${completed} / ${missionDefinitions.length}`;
-  $('missionList').innerHTML = missionDefinitions.map(mission => {
-    const current = Math.min(mission.goal, mission.get(state));
-    const done = current >= mission.goal;
-    return `<article class="mission"><div class="mission-top"><span class="mission-name">${mission.name}</span><span class="mission-status">${done ? '✓' : '○'}</span></div><p>${mission.description} · ${format(current)} / ${format(mission.goal)}</p><div class="mission-bar"><span style="width:${(current / mission.goal) * 100}%"></span></div></article>`;
+function renderAchievements() {
+  const completed = achievementDefinitions.filter(achievement => achievement.get(state) >= achievement.goal).length;
+  $('achievementCount').textContent = `${completed} / ${achievementDefinitions.length}`;
+  $('achievementGrid').innerHTML = achievementDefinitions.map(achievement => {
+    const current = Math.min(achievement.goal, achievement.get(state));
+    const done = current >= achievement.goal;
+    return `<article class="achievement-card ${done ? 'completed' : ''}"><div class="achievement-icon">${done ? '✓' : achievement.icon}</div><div class="achievement-copy"><h3>${achievement.name}</h3><p>${achievement.description}</p><div class="achievement-bar"><span style="width:${(current / achievement.goal) * 100}%"></span></div><small>${format(current)} / ${format(achievement.goal)}</small></div></article>`;
   }).join('');
+}
+
+function renderLeaderboard() {
+  const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]');
+  $('leaderboardList').innerHTML = scores.length ? scores.sort((a, b) => b.score - a.score).slice(0, 10).map((entry, index) => `<div class="leaderboard-row ${entry.name === state.playerName ? 'current-player' : ''}"><strong>${['🥇', '🥈', '🥉'][index] || `#${index + 1}`}</strong><span>${entry.name}</span><b>${format(entry.score)} ✦</b><small>LV.${entry.level}</small></div>`).join('') : '<div class="empty-leaderboard">還沒有紀錄，成為第一名吧。</div>';
+}
+
+function recordLeaderboardScore() {
+  const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]').filter(entry => entry.name !== state.playerName);
+  scores.push({ name: state.playerName, score: Math.floor(state.totalCoins), level: state.level, date: Date.now() });
+  localStorage.setItem('stardust-leaderboard-v1', JSON.stringify(scores.sort((a, b) => b.score - a.score).slice(0, 10)));
+  renderLeaderboard();
+  showToast('排行榜紀錄已更新');
 }
 
 function collect() {
@@ -178,6 +212,7 @@ function claimDailySupply() {
   const today = new Date().toISOString().slice(0, 10);
   if (state.lastSupply === today) return;
   state.lastSupply = today;
+  state.suppliesClaimed += 1;
   state.coins += 100;
   state.totalCoins += 100;
   showToast('每日補給已送達：+100 星塵');
@@ -276,7 +311,17 @@ $('menuOverlay').addEventListener('click', () => toggleMenu(false));
 $('dailySupplyButton').addEventListener('click', claimDailySupply);
 $('musicToggle').addEventListener('click', toggleMusic);
 $('prestigeButton').addEventListener('click', prestige);
-document.querySelectorAll('.menu-item').forEach(item => item.addEventListener('click', () => { const target = item.dataset.scroll; const element = target === 'missions' ? document.querySelector('.missions-panel') : target === 'stats' ? document.querySelector('.stats-panel') : document.querySelector('.hero-grid'); element.scrollIntoView({ behavior: 'smooth', block: 'start' }); toggleMenu(false); }));
+function switchView(view) {
+  document.querySelector('.hero-grid').classList.toggle('view-hidden', view !== 'workshop');
+  document.querySelector('.game-layout').classList.toggle('view-hidden', view !== 'workshop');
+  document.querySelectorAll('.app-view').forEach(element => element.classList.toggle('hidden-view', element.id !== `${view}View`));
+  document.querySelectorAll('.menu-item').forEach(item => item.classList.toggle('active', item.dataset.view === view));
+}
+
+document.querySelectorAll('.menu-item').forEach(item => item.addEventListener('click', () => { switchView(item.dataset.view); toggleMenu(false); }));
+$('saveNameButton').addEventListener('click', () => { state.playerName = $('playerName').value.trim() || '星塵探勘員'; $('playerName').value = state.playerName; saveGame(); renderLeaderboard(); showToast('玩家名稱已保存'); });
+$('recordScoreButton').addEventListener('click', recordLeaderboardScore);
+switchView('workshop');
 
 loadGame();
 render();
