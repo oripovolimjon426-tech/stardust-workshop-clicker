@@ -1,5 +1,7 @@
 const SAVE_KEY = 'stardust-workshop-save-v1';
 const MAX_OFFLINE_SECONDS = 60 * 60 * 8;
+const SUPABASE_URL = 'https://uwoizfkhuwoynhdnpnty.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_qDMnTsw3EeXETYCKiWyFpg_PMokhXtd';
 
 const upgradeDefinitions = [
   { id: 'gloves', icon: '✧', name: '量子手套', description: '每次點擊 +1 星塵', baseCost: 25, growth: 1.55, effect: 'clickPower' },
@@ -135,15 +137,31 @@ function renderAchievements() {
 
 function renderLeaderboard() {
   const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]');
+  renderLeaderboardRows(scores, '本機排行榜');
+  fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,level&order=score.desc,created_at.asc&limit=10`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('leaderboard unavailable')))
+    .then(remoteScores => renderLeaderboardRows(remoteScores.map(entry => ({ name: entry.player_name, score: entry.score, level: entry.level })), '全球排行榜'))
+    .catch(() => {});
+}
+
+function renderLeaderboardRows(scores, label) {
+  const title = $('leaderboardView')?.querySelector('.eyebrow');
+  if (title) title.textContent = label === '全球排行榜' ? 'GLOBAL HALL OF FAME' : 'LOCAL HALL OF FAME';
   $('leaderboardList').innerHTML = scores.length ? scores.sort((a, b) => b.score - a.score).slice(0, 10).map((entry, index) => `<div class="leaderboard-row ${entry.name === state.playerName ? 'current-player' : ''}"><strong>${['🥇', '🥈', '🥉'][index] || `#${index + 1}`}</strong><span>${entry.name}</span><b>${format(entry.score)} ✦</b><small>LV.${entry.level}</small></div>`).join('') : '<div class="empty-leaderboard">還沒有紀錄，成為第一名吧。</div>';
 }
 
-function recordLeaderboardScore() {
+async function recordLeaderboardScore() {
   const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]').filter(entry => entry.name !== state.playerName);
   scores.push({ name: state.playerName, score: Math.floor(state.totalCoins), level: state.level, date: Date.now() });
   localStorage.setItem('stardust-leaderboard-v1', JSON.stringify(scores.sort((a, b) => b.score - a.score).slice(0, 10)));
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, { method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ player_name: state.playerName, score: Math.floor(state.totalCoins), level: state.level }) });
+    if (!response.ok) throw new Error('submit failed');
+    showToast('全球排行榜紀錄已更新');
+  } catch (error) {
+    showToast('目前離線，已保存本機紀錄。', true);
+  }
   renderLeaderboard();
-  showToast('排行榜紀錄已更新');
 }
 
 function collect() {

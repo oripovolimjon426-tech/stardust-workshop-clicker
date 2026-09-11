@@ -8,6 +8,7 @@
 - 4 種升級：點擊力量、自動採集、產出倍率、暴擊機率
 - 自動產出與離線收益，最多計算 8 小時
 - 玩家等級、任務成就、統計資料
+- Supabase 全球排行榜，離線時自動退回本機排行榜
 - `localStorage` 自動保存，重新開啟瀏覽器可接續進度
 - 響應式設計，支援手機與桌面
 - 純 HTML、CSS、JavaScript，無建置工具與後端依賴
@@ -41,6 +42,10 @@ git push -u origin main
 5. 選擇 `main` 分支與 `/ (root)`，按下 **Save**。
 
 幾分鐘後即可使用 GitHub Pages 網址遊玩。
+
+## Supabase 全球排行榜
+
+排行榜資料表定義位於 `supabase-schema.sql`。目前 project 使用 Supabase 免費方案，前端只使用公開 publishable key；資料表已透過 RLS 限制只能讀取或提交符合範圍的分數。
 
 ## 資料說明
 
