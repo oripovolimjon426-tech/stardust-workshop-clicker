@@ -34,6 +34,24 @@ const achievementDefinitions = [
   { id: 'prestige1', icon: '☷', name: '重啟星核', description: '完成 1 次星核重置', goal: 1, get: state => state.prestigeCount },
   { id: 'best100', icon: '★', name: '一擊入魂', description: '單次點擊獲得 100 星塵', goal: 100, get: state => state.bestClick }
 ];
+const generatedAchievementGroups = [
+  { prefix: 'clicks', icon: '⚡', name: '點擊', description: '完成', values: [50, 100, 250, 500, 2500, 5000, 10000, 25000, 50000, 100000], unit: '次點擊', get: state => state.clicks },
+  { prefix: 'coins', icon: '◈', name: '星塵', description: '累計收集', values: [2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 5000000], unit: '星塵', get: state => state.totalCoins },
+  { prefix: 'critical', icon: '✹', name: '暴擊', description: '觸發', values: [25, 50, 100, 250, 500, 1000, 2500, 5000], unit: '次暴擊', get: state => state.criticalHits },
+  { prefix: 'upgrades', icon: '⬡', name: '升級', description: '購買', values: [10, 15, 25, 30, 40, 60, 80, 100], unit: '次升級', get: state => state.totalUpgrades },
+  { prefix: 'levels', icon: '⬆', name: '等級', description: '達到等級', values: [4, 6, 8, 12, 15, 20, 30, 50], unit: '', get: state => state.level },
+  { prefix: 'offline', icon: '☼', name: '離線', description: '獲得', values: [250, 500, 1000, 2500, 5000, 10000], unit: '點離線收益', get: state => state.totalOffline },
+  { prefix: 'supplies', icon: '▣', name: '補給', description: '領取', values: [2, 3, 5, 10, 20], unit: '次每日補給', get: state => state.suppliesClaimed },
+  { prefix: 'prestige', icon: '☷', name: '星核', description: '完成', values: [2, 3, 5, 10], unit: '次星核重置', get: state => state.prestigeCount }
+];
+generatedAchievementGroups.forEach(group => group.values.forEach((goal, index) => achievementDefinitions.push({
+  id: `${group.prefix}${goal}`,
+  icon: group.icon,
+  name: `${group.name}計畫 ${index + 1}`,
+  description: `${group.description} ${goal.toLocaleString('zh-TW')} ${group.unit}`,
+  goal,
+  get: group.get
+})));
 
 const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, suppliesClaimed: 0, lastSupply: '', playerName: '星塵探勘員', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
 let state = defaultState();
@@ -45,6 +63,8 @@ let bestCombo = 0;
 let lastClickAt = 0;
 let musicTimer;
 let musicPlaying = false;
+let supabaseClient;
+let leaderboardRefreshTimer;
 
 const $ = id => document.getElementById(id);
 const format = value => Math.floor(value).toLocaleString('zh-TW');
@@ -138,10 +158,23 @@ function renderAchievements() {
 function renderLeaderboard() {
   const scores = JSON.parse(localStorage.getItem('stardust-leaderboard-v1') || '[]');
   renderLeaderboardRows(scores, '本機排行榜');
+  refreshRemoteLeaderboard();
+}
+
+function refreshRemoteLeaderboard() {
   fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score,level&order=score.desc,created_at.asc&limit=10`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } })
     .then(response => response.ok ? response.json() : Promise.reject(new Error('leaderboard unavailable')))
     .then(remoteScores => renderLeaderboardRows(remoteScores.map(entry => ({ name: entry.player_name, score: entry.score, level: entry.level })), '全球排行榜'))
     .catch(() => {});
+}
+
+function initRealtimeLeaderboard() {
+  if (!window.supabase?.createClient) return;
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  supabaseClient.channel('global-leaderboard-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'leaderboard' }, () => refreshRemoteLeaderboard())
+    .subscribe();
+  leaderboardRefreshTimer = setInterval(refreshRemoteLeaderboard, 5000);
 }
 
 function renderLeaderboardRows(scores, label) {
@@ -340,6 +373,7 @@ document.querySelectorAll('.menu-item').forEach(item => item.addEventListener('c
 $('saveNameButton').addEventListener('click', () => { state.playerName = $('playerName').value.trim() || '星塵探勘員'; $('playerName').value = state.playerName; saveGame(); renderLeaderboard(); showToast('玩家名稱已保存'); });
 $('recordScoreButton').addEventListener('click', recordLeaderboardScore);
 switchView('workshop');
+initRealtimeLeaderboard();
 
 loadGame();
 render();

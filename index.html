@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=5bc02cc" />
+  <link rel="stylesheet" href="styles.css?v=realtime75" />
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -68,7 +68,7 @@
     </section>
 
     <section class="app-view hidden-view" id="achievementsView">
-      <div class="view-heading"><div><p class="eyebrow">ACHIEVEMENT ARCHIVE</p><h2>成就檔案庫</h2><p>每一個里程碑都會被記錄，看看你離全收集還有多遠。</p></div><span class="completion large-completion" id="achievementCount">0 / 16</span></div>
+      <div class="view-heading"><div><p class="eyebrow">ACHIEVEMENT ARCHIVE</p><h2>成就檔案庫</h2><p>每一個里程碑都會被記錄，看看你離全收集還有多遠。</p></div><span class="completion large-completion" id="achievementCount">0 / 75</span></div>
       <div class="achievement-grid" id="achievementGrid"></div>
     </section>
     <section class="app-view hidden-view" id="profileView">
@@ -76,7 +76,7 @@
       <div class="profile-layout"><div class="profile-card"><div class="avatar-ring">✦</div><label for="playerName">玩家名稱</label><div class="name-row"><input id="playerName" maxlength="18" value="星塵探勘員" /><button class="small-action" id="saveNameButton" type="button">保存</button></div><p class="profile-note">名稱只會儲存在此裝置的排行榜中。</p></div><div class="info-panel stats-panel"><div class="data-list"><div><span>本次遊玩時間</span><strong id="sessionTime">0m</strong></div><div><span>最高單次點擊</span><strong id="bestClick">1 ✦</strong></div><div><span>累計收集星塵</span><strong id="totalCoinsValue">0 ✦</strong></div><div><span>離線收益</span><strong id="offlineValue">0 ✦</strong></div><div><span>星核重置次數</span><strong id="prestigeCountValue">0 次</strong></div></div><div class="data-footer"><span class="cloud-icon">☁</span><span>資料儲存於此裝置<br /><small>最後保存 <b id="lastSaved">剛剛</b></small></span></div></div></div>
     </section>
     <section class="app-view hidden-view" id="leaderboardView">
-      <div class="view-heading"><div><p class="eyebrow">LOCAL HALL OF FAME</p><h2>排行榜</h2><p>本機最高紀錄榜。未來接上伺服器後即可擴充為全球排行榜。</p></div><span class="completion">TOP 10</span></div>
+      <div class="view-heading"><div><p class="eyebrow">GLOBAL HALL OF FAME</p><h2>排行榜</h2><p>全球玩家即時排行榜，其他玩家提交成績後會自動刷新。</p></div><span class="completion">TOP 10 · LIVE</span></div>
       <div class="leaderboard-card"><div class="leaderboard-head"><span>排名</span><span>探勘員</span><span>累計星塵</span><span>等級</span></div><div id="leaderboardList"></div><button class="primary-button leaderboard-button" id="recordScoreButton" type="button">更新我的最佳紀錄</button></div>
     </section>
     <div id="missionList" class="legacy-compat" aria-hidden="true"></div>
@@ -101,6 +101,7 @@
   <div class="offline-modal hidden" id="offlineModal">
     <div class="modal-card"><span class="modal-icon">☼</span><p class="eyebrow">WELCOME BACK</p><h2>工坊沒有停下</h2><p>你離線期間，採集器替你收集了 <strong id="offlineModalValue">0</strong> 星塵。</p><button class="primary-button" id="closeModal" type="button">收下星塵</button></div>
   </div>
-  <script src="app.js?v=5bc02cc"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js?v=realtime75"></script>
 </body>
 </html>

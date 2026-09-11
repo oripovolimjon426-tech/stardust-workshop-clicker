@@ -24,3 +24,6 @@ create policy "Anyone can submit leaderboard score"
   );
 
 grant select, insert on public.leaderboard to anon, authenticated;
+
+-- Enable Supabase Realtime events for live leaderboard refreshes.
+alter publication supabase_realtime add table public.leaderboard;
