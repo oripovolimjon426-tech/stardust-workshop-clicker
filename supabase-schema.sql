@@ -12,8 +12,7 @@ create index if not exists leaderboard_score_idx
   on public.leaderboard (score desc, created_at asc);
 
 create unique index if not exists leaderboard_player_id_key
-  on public.leaderboard (player_id)
-  where player_id is not null;
+  on public.leaderboard (player_id);
 
 alter table public.leaderboard enable row level security;
 
