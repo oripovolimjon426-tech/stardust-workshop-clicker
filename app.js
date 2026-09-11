@@ -15,11 +15,16 @@ const missionDefinitions = [
   { id: 'offline', name: '時間的禮物', description: '獲得 100 點離線收益', goal: 100, get: state => state.totalOffline }
 ];
 
-const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
+const defaultState = () => ({ coins: 0, totalCoins: 0, clicks: 0, level: 1, clickPower: 1, autoPower: 0, multiplier: 1, permanentMultiplier: 1, critChance: 0.05, bestClick: 1, criticalHits: 0, totalUpgrades: 0, totalOffline: 0, prestigeCount: 0, lastSupply: '', upgrades: { gloves: 0, drone: 0, lens: 0, luck: 0 }, startedAt: Date.now(), lastSaved: Date.now(), sound: true });
 let state = defaultState();
 let sessionStarted = Date.now();
 let lastTick = Date.now();
 let audioContext;
+let combo = 0;
+let bestCombo = 0;
+let lastClickAt = 0;
+let musicTimer;
+let musicPlaying = false;
 
 const $ = id => document.getElementById(id);
 const format = value => Math.floor(value).toLocaleString('zh-TW');
@@ -32,7 +37,7 @@ function loadGame() {
     if (!saved) return;
     state = { ...defaultState(), ...saved, upgrades: { ...defaultState().upgrades, ...(saved.upgrades || {}) } };
     const elapsed = Math.min(MAX_OFFLINE_SECONDS, Math.max(0, (Date.now() - state.lastSaved) / 1000));
-    const offlineGain = Math.floor(elapsed * state.autoPower * state.multiplier);
+    const offlineGain = Math.floor(elapsed * state.autoPower * state.multiplier * state.permanentMultiplier);
     if (offlineGain > 0) {
       state.coins += offlineGain;
       state.totalCoins += offlineGain;
@@ -78,6 +83,10 @@ function render() {
   $('totalCoinsValue').textContent = `${format(state.totalCoins)} ✦`;
   $('offlineValue').textContent = `${format(state.totalOffline)} ✦`;
   $('sessionTime').textContent = `${Math.max(1, Math.floor((Date.now() - sessionStarted) / 60000))}m`;
+  $('comboValue').textContent = `x${(1 + Math.min(combo, 20) * .05).toFixed(2)}`;
+  $('comboBest').textContent = `最高 x${(1 + Math.min(bestCombo, 20) * .05).toFixed(2)}`;
+  $('prestigeValue').textContent = `永久加成 x${state.permanentMultiplier.toFixed(2)}`;
+  renderDailySupply();
   renderUpgrades();
   renderMissions();
 }
@@ -104,8 +113,13 @@ function renderMissions() {
 }
 
 function collect() {
+  const now = Date.now();
+  combo = now - lastClickAt < 1200 ? combo + 1 : 1;
+  lastClickAt = now;
+  bestCombo = Math.max(bestCombo, combo);
   const isCritical = Math.random() < state.critChance;
-  const amount = Math.max(1, Math.floor(state.clickPower * state.multiplier * (isCritical ? 3 : 1)));
+  const comboMultiplier = 1 + Math.min(combo, 20) * .05;
+  const amount = Math.max(1, Math.floor(state.clickPower * state.multiplier * state.permanentMultiplier * comboMultiplier * (isCritical ? 3 : 1)));
   state.coins += amount;
   state.totalCoins += amount;
   state.clicks += 1;
@@ -148,8 +162,85 @@ function tick() {
   const now = Date.now();
   const seconds = Math.min(5, (now - lastTick) / 1000);
   lastTick = now;
-  const gain = state.autoPower * state.multiplier * seconds;
+  const gain = state.autoPower * state.multiplier * state.permanentMultiplier * seconds;
   if (gain > 0) { state.coins += gain; state.totalCoins += gain; render(); }
+}
+
+function renderDailySupply() {
+  const today = new Date().toISOString().slice(0, 10);
+  const claimed = state.lastSupply === today;
+  $('dailySupplyText').textContent = claimed ? '今日補給已領取，明天再來' : '今天可領取 100 ✦';
+  $('dailySupplyButton').textContent = claimed ? '已領取' : '領取';
+  $('dailySupplyButton').disabled = claimed;
+}
+
+function claimDailySupply() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (state.lastSupply === today) return;
+  state.lastSupply = today;
+  state.coins += 100;
+  state.totalCoins += 100;
+  showToast('每日補給已送達：+100 星塵');
+  playTone(720, .16);
+  render();
+  saveGame();
+}
+
+function prestige() {
+  const cost = 5000;
+  if (state.coins < cost) { showToast('需要 5,000 星塵才能啟動星核。', true); return; }
+  if (!confirm('星核重置會清除本輪升級與星塵，永久產出提升 20%。確定嗎？')) return;
+  state.coins = 0;
+  state.clickPower = 1;
+  state.autoPower = 0;
+  state.multiplier = 1;
+  state.critChance = 0.05;
+  state.upgrades = { gloves: 0, drone: 0, lens: 0, luck: 0 };
+  state.prestigeCount += 1;
+  state.permanentMultiplier = 1 + state.prestigeCount * .2;
+  combo = 0;
+  showToast(`星核已啟動，永久加成 x${state.permanentMultiplier.toFixed(2)}`);
+  render();
+  saveGame();
+}
+
+function playMusicNote() {
+  if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const notes = [220, 261.63, 329.63, 392, 329.63, 293.66, 261.63, 196];
+  const frequency = notes[(Date.now() / 500 | 0) % notes.length];
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = 'triangle';
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(.0001, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.018, audioContext.currentTime + .05);
+  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .48);
+  oscillator.connect(gain).connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + .5);
+}
+
+function toggleMusic() {
+  if (musicPlaying) {
+    clearInterval(musicTimer);
+    musicTimer = undefined;
+    musicPlaying = false;
+    $('musicToggle').textContent = '播放';
+    showToast('星際電台已暫停');
+    return;
+  }
+  musicPlaying = true;
+  playMusicNote();
+  musicTimer = setInterval(playMusicNote, 500);
+  $('musicToggle').textContent = '停止';
+  showToast('星際電台播放中');
+}
+
+function toggleMenu(open) {
+  $('sideMenu').classList.toggle('open', open);
+  $('menuOverlay').classList.toggle('open', open);
+  $('sideMenu').setAttribute('aria-hidden', String(!open));
+  $('menuToggle').setAttribute('aria-expanded', String(open));
 }
 
 function showToast(message, warning = false) {
@@ -179,6 +270,13 @@ $('upgradeList').addEventListener('click', event => { const button = event.targe
 $('closeModal').addEventListener('click', () => $('offlineModal').classList.add('hidden'));
 $('soundToggle').addEventListener('click', () => { state.sound = !state.sound; $('soundToggle').textContent = state.sound ? '♫' : '⌁'; showToast(state.sound ? '音效已開啟' : '音效已關閉'); saveGame(); });
 $('resetButton').addEventListener('click', () => { if (!confirm('確定要清除所有玩家資料嗎？此操作無法復原。')) return; localStorage.removeItem(SAVE_KEY); state = defaultState(); sessionStarted = Date.now(); render(); showToast('已建立新的工坊。'); });
+$('menuToggle').addEventListener('click', () => toggleMenu(true));
+$('menuClose').addEventListener('click', () => toggleMenu(false));
+$('menuOverlay').addEventListener('click', () => toggleMenu(false));
+$('dailySupplyButton').addEventListener('click', claimDailySupply);
+$('musicToggle').addEventListener('click', toggleMusic);
+$('prestigeButton').addEventListener('click', prestige);
+document.querySelectorAll('.menu-item').forEach(item => item.addEventListener('click', () => { const target = item.dataset.scroll; const element = target === 'missions' ? document.querySelector('.missions-panel') : target === 'stats' ? document.querySelector('.stats-panel') : document.querySelector('.hero-grid'); element.scrollIntoView({ behavior: 'smooth', block: 'start' }); toggleMenu(false); }));
 
 loadGame();
 render();

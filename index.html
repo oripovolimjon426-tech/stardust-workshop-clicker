@@ -15,6 +15,7 @@
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
   <header class="topbar shell">
+    <button class="menu-button" id="menuToggle" type="button" aria-label="開啟遊戲選單" aria-expanded="false" title="遊戲選單"><span></span><span></span><span></span></button>
     <a class="brand" href="./" aria-label="星塵工坊首頁">
       <span class="brand-mark">✦</span>
       <span><strong>星塵</strong><small>工坊</small></span>
@@ -49,6 +50,7 @@
     <section class="game-layout">
       <div class="click-stage">
         <div class="stage-label"><span class="pulse-dot"></span> 核心採集器 <span class="stage-id">CORE-01</span></div>
+        <div class="combo-hud"><span>連擊</span><strong id="comboValue">x1.00</strong><small id="comboBest">最高 x1.00</small></div>
         <div class="core-wrap">
           <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
           <button class="core-button" id="clickButton" type="button" aria-label="點擊採集星塵">
@@ -82,6 +84,20 @@
       </div>
     </section>
   </main>
+
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <aside class="side-menu" id="sideMenu" aria-hidden="true">
+    <div class="side-menu-header"><div><p class="eyebrow">CONTROL DECK</p><h2>遊戲選單</h2></div><button class="icon-button" id="menuClose" type="button" aria-label="關閉遊戲選單">×</button></div>
+    <nav class="menu-nav" aria-label="遊戲導覽">
+      <button class="menu-item active" data-scroll="top" type="button"><span>⌂</span> 工坊總覽</button>
+      <button class="menu-item" data-scroll="missions" type="button"><span>◇</span> 任務成就</button>
+      <button class="menu-item" data-scroll="stats" type="button"><span>▤</span> 玩家資料</button>
+    </nav>
+    <div class="menu-feature"><div class="feature-icon">☼</div><div><strong>每日補給</strong><p id="dailySupplyText">今天可領取 100 ✦</p></div><button class="small-action" id="dailySupplyButton" type="button">領取</button></div>
+    <div class="menu-feature music-feature"><div class="feature-icon">♫</div><div><strong>星際電台</strong><p>循環播放原創電子旋律</p></div><button class="small-action" id="musicToggle" type="button">播放</button></div>
+    <div class="prestige-box"><p class="eyebrow">PRESTIGE CORE</p><h3>星核重置</h3><p>重置本輪升級，換取永久產出加成。</p><strong id="prestigeValue">永久加成 x1.00</strong><button class="primary-button" id="prestigeButton" type="button">需要 5,000 ✦</button></div>
+    <p class="menu-footnote">遊戲進度會自動保存於此裝置</p>
+  </aside>
 
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
   <div class="offline-modal hidden" id="offlineModal">
